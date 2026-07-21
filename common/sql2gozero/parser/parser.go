@@ -6,10 +6,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/miaogaolin/gotl/common/ddl-parser/parser"
 	"github.com/miaogaolin/gotl/common/sql2gozero/converter"
 	"github.com/miaogaolin/gotl/common/sql2gozero/model"
 	"github.com/miaogaolin/gotl/common/sql2gozero/util"
-	"github.com/miaogaolin/gotl/common/ddl-parser/parser"
 	"github.com/zeromicro/go-zero/core/collection"
 	su "github.com/zeromicro/go-zero/tools/goctl/util"
 	"github.com/zeromicro/go-zero/tools/goctl/util/console"
@@ -82,7 +82,7 @@ func Parse(filename, database string) ([]*Table, error) {
 		columns := e.Columns
 
 		var (
-			primaryColumnSet = collection.NewSet()
+			primaryColumnSet = collection.NewSet[string]()
 
 			primaryColumn string
 			uniqueKeyMap  = make(map[string][]string)
@@ -92,7 +92,7 @@ func Parse(filename, database string) ([]*Table, error) {
 		for _, column := range columns {
 			if column.Constraint != nil {
 				if column.Constraint.Primary {
-					primaryColumnSet.AddStr(column.Name)
+					primaryColumnSet.Add(column.Name)
 				}
 
 				if column.Constraint.Unique {
@@ -114,7 +114,7 @@ func Parse(filename, database string) ([]*Table, error) {
 
 			if len(e.ColumnPrimaryKey) == 1 {
 				primaryColumn = e.ColumnPrimaryKey[0]
-				primaryColumnSet.AddStr(e.ColumnPrimaryKey[0])
+				primaryColumnSet.Add(e.ColumnPrimaryKey[0])
 			}
 
 			if len(e.ColumnUniqueKey) > 0 {
@@ -177,7 +177,7 @@ func Parse(filename, database string) ([]*Table, error) {
 
 func checkDuplicateUniqueIndex(uniqueIndex map[string][]*Field, tableName string) {
 	log := console.NewColorConsole()
-	uniqueSet := collection.NewSet()
+	uniqueSet := collection.NewSet[string]()
 	for k, i := range uniqueIndex {
 		var list []string
 		for _, e := range i {
@@ -191,7 +191,7 @@ func checkDuplicateUniqueIndex(uniqueIndex map[string][]*Field, tableName string
 			continue
 		}
 
-		uniqueSet.AddStr(joinRet)
+		uniqueSet.Add(joinRet)
 	}
 }
 
@@ -308,7 +308,7 @@ func ConvertDataType(table *model.Table) (*Table, error) {
 		return reply.Fields[i].OrdinalPosition < reply.Fields[j].OrdinalPosition
 	})
 
-	uniqueIndexSet := collection.NewSet()
+	uniqueIndexSet := collection.NewSet[string]()
 	log := console.NewColorConsole()
 	for indexName, each := range table.UniqueIndex {
 		sort.Slice(each, func(i, j int) bool {
@@ -339,7 +339,7 @@ func ConvertDataType(table *model.Table) (*Table, error) {
 			continue
 		}
 
-		uniqueIndexSet.AddStr(uniqueKey)
+		uniqueIndexSet.Add(uniqueKey)
 		reply.UniqueIndex[indexName] = list
 	}
 

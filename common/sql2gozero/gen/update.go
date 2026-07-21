@@ -3,8 +3,8 @@ package gen
 import (
 	"strings"
 
-	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/miaogaolin/gotl/common/sql2gozero/template"
+	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/go-zero/tools/goctl/util"
 	"github.com/zeromicro/go-zero/tools/goctl/util/pathx"
 	"github.com/zeromicro/go-zero/tools/goctl/util/stringx"
@@ -25,13 +25,13 @@ func genUpdate(table Table, withCache, postgreSql bool) (string, string, error) 
 		expressionValues = append(expressionValues, "data."+camel)
 	}
 
-	keySet := collection.NewSet()
-	keyVariableSet := collection.NewSet()
-	keySet.AddStr(table.PrimaryCacheKey.DataKeyExpression)
-	keyVariableSet.AddStr(table.PrimaryCacheKey.KeyLeft)
+	keySet := collection.NewSet[string]()
+	keyVariableSet := collection.NewSet[string]()
+	keySet.Add(table.PrimaryCacheKey.DataKeyExpression)
+	keyVariableSet.Add(table.PrimaryCacheKey.KeyLeft)
 	for _, key := range table.UniqueCacheKey {
-		keySet.AddStr(key.DataKeyExpression)
-		keyVariableSet.AddStr(key.KeyLeft)
+		keySet.Add(key.DataKeyExpression)
+		keyVariableSet.Add(key.KeyLeft)
 	}
 
 	if postgreSql {
@@ -50,8 +50,8 @@ func genUpdate(table Table, withCache, postgreSql bool) (string, string, error) 
 		Execute(map[string]interface{}{
 			"withCache":             withCache,
 			"upperStartCamelObject": camelTableName,
-			"keys":                  strings.Join(keySet.KeysStr(), "\n"),
-			"keyValues":             strings.Join(keyVariableSet.KeysStr(), ", "),
+			"keys":                  strings.Join(keySet.Keys(), "\n"),
+			"keyValues":             strings.Join(keyVariableSet.Keys(), ", "),
 			"primaryCacheKey":       table.PrimaryCacheKey.DataKeyExpression,
 			"primaryKeyVariable":    table.PrimaryCacheKey.KeyLeft,
 			"lowerStartCamelObject": stringx.From(camelTableName).Untitle(),

@@ -1,0 +1,13 @@
+.git
+.github
+.idea
+.vscode
+.DS_Store
+
+gotl
+*.log
+coverage*
+
+docs
+Dockerfile
+compose.yaml

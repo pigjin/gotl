@@ -1,0 +1,6 @@
+services:
+  gotl:
+    image: ghcr.io/pigjin/gotl:${GOTL_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "${GOTL_PORT:-8080}:8080"

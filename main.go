@@ -14,5 +14,8 @@ func main() {
 	flag.Parse()
 	r := gin.New()
 	handler.Route(r)
-	Server(r, *post)
+	err := Server(r, *post)
+	if err != nil {
+		return
+	}
 }

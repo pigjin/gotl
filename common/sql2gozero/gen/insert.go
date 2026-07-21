@@ -4,21 +4,21 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/miaogaolin/gotl/common/sql2gozero/template"
+	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/go-zero/tools/goctl/util"
 	"github.com/zeromicro/go-zero/tools/goctl/util/pathx"
 	"github.com/zeromicro/go-zero/tools/goctl/util/stringx"
 )
 
 func genInsert(table Table, withCache, postgreSql bool) (string, string, error) {
-	keySet := collection.NewSet()
-	keyVariableSet := collection.NewSet()
-	keySet.AddStr(table.PrimaryCacheKey.DataKeyExpression)
-	keyVariableSet.AddStr(table.PrimaryCacheKey.KeyLeft)
+	keySet := collection.NewSet[string]()
+	keyVariableSet := collection.NewSet[string]()
+	keySet.Add(table.PrimaryCacheKey.DataKeyExpression)
+	keyVariableSet.Add(table.PrimaryCacheKey.KeyLeft)
 	for _, key := range table.UniqueCacheKey {
-		keySet.AddStr(key.DataKeyExpression)
-		keyVariableSet.AddStr(key.KeyLeft)
+		keySet.Add(key.DataKeyExpression)
+		keyVariableSet.Add(key.KeyLeft)
 	}
 
 	expressions := make([]string, 0)
@@ -60,8 +60,8 @@ func genInsert(table Table, withCache, postgreSql bool) (string, string, error) 
 			"lowerStartCamelObject": stringx.From(camel).Untitle(),
 			"expression":            strings.Join(expressions, ", "),
 			"expressionValues":      strings.Join(expressionValues, ", "),
-			"keys":                  strings.Join(keySet.KeysStr(), "\n"),
-			"keyValues":             strings.Join(keyVariableSet.KeysStr(), ", "),
+			"keys":                  strings.Join(keySet.Keys(), "\n"),
+			"keyValues":             strings.Join(keyVariableSet.Keys(), ", "),
 			"data":                  table,
 		})
 	if err != nil {

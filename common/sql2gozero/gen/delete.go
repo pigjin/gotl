@@ -3,21 +3,21 @@ package gen
 import (
 	"strings"
 
-	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/miaogaolin/gotl/common/sql2gozero/template"
+	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/go-zero/tools/goctl/util"
 	"github.com/zeromicro/go-zero/tools/goctl/util/pathx"
 	"github.com/zeromicro/go-zero/tools/goctl/util/stringx"
 )
 
 func genDelete(table Table, withCache, postgreSql bool) (string, string, error) {
-	keySet := collection.NewSet()
-	keyVariableSet := collection.NewSet()
-	keySet.AddStr(table.PrimaryCacheKey.KeyExpression)
-	keyVariableSet.AddStr(table.PrimaryCacheKey.KeyLeft)
+	keySet := collection.NewSet[string]()
+	keyVariableSet := collection.NewSet[string]()
+	keySet.Add(table.PrimaryCacheKey.KeyExpression)
+	keyVariableSet.Add(table.PrimaryCacheKey.KeyLeft)
 	for _, key := range table.UniqueCacheKey {
-		keySet.AddStr(key.DataKeyExpression)
-		keyVariableSet.AddStr(key.KeyLeft)
+		keySet.Add(key.DataKeyExpression)
+		keyVariableSet.Add(key.KeyLeft)
 	}
 
 	camel := table.Name.ToCamel()
@@ -34,9 +34,9 @@ func genDelete(table Table, withCache, postgreSql bool) (string, string, error) 
 			"containsIndexCache":        table.ContainsUniqueCacheKey,
 			"lowerStartCamelPrimaryKey": stringx.From(table.PrimaryKey.Name.ToCamel()).Untitle(),
 			"dataType":                  table.PrimaryKey.DataType,
-			"keys":                      strings.Join(keySet.KeysStr(), "\n"),
+			"keys":                      strings.Join(keySet.Keys(), "\n"),
 			"originalPrimaryKey":        wrapWithRawString(table.PrimaryKey.Name.Source(), postgreSql),
-			"keyValues":                 strings.Join(keyVariableSet.KeysStr(), ", "),
+			"keyValues":                 strings.Join(keyVariableSet.Keys(), ", "),
 			"postgreSql":                postgreSql,
 			"data":                      table,
 		})

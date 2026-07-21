@@ -6,14 +6,14 @@ import (
 	"strings"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/miaogaolin/gotl/common/sql2gozero/gen"
+	"github.com/miaogaolin/gotl/common/sql2gozero/model"
+	"github.com/miaogaolin/gotl/common/sql2gozero/util"
 	"github.com/urfave/cli"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/postgres"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/tools/goctl/config"
-	"github.com/miaogaolin/gotl/common/sql2gozero/gen"
-	"github.com/miaogaolin/gotl/common/sql2gozero/model"
-	"github.com/miaogaolin/gotl/common/sql2gozero/util"
 	file "github.com/zeromicro/go-zero/tools/goctl/util"
 	"github.com/zeromicro/go-zero/tools/goctl/util/console"
 	"github.com/zeromicro/go-zero/tools/goctl/util/pathx"
@@ -44,8 +44,9 @@ func MysqlDDL(ctx *cli.Context) error {
 	database := ctx.String(flagDatabase)
 	home := ctx.String(flagHome)
 	remote := ctx.String("remote")
+	branch := ctx.String("branch")
 	if len(remote) > 0 {
-		repo, _ := file.CloneIntoGitHome(remote)
+		repo, _ := file.CloneIntoGitHome(remote, branch)
 		if len(repo) > 0 {
 			home = repo
 		}
@@ -70,8 +71,9 @@ func MySqlDataSource(ctx *cli.Context) error {
 	style := ctx.String(flagStyle)
 	home := ctx.String("home")
 	remote := ctx.String("remote")
+	branch := ctx.String("branch")
 	if len(remote) > 0 {
-		repo, _ := file.CloneIntoGitHome(remote)
+		repo, _ := file.CloneIntoGitHome(remote, branch)
 		if len(repo) > 0 {
 			home = repo
 		}
@@ -99,8 +101,9 @@ func PostgreSqlDataSource(ctx *cli.Context) error {
 	schema := ctx.String(flagSchema)
 	home := ctx.String("home")
 	remote := ctx.String("remote")
+	branch := ctx.String("branch")
 	if len(remote) > 0 {
-		repo, _ := file.CloneIntoGitHome(remote)
+		repo, _ := file.CloneIntoGitHome(remote, branch)
 		if len(repo) > 0 {
 			home = repo
 		}

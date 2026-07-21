@@ -28,7 +28,7 @@ func ParseContent(content []byte, database string) ([]*Table, error) {
 		columns := e.Columns
 
 		var (
-			primaryColumnSet = collection.NewSet()
+			primaryColumnSet = collection.NewSet[string]()
 
 			primaryColumn string
 			uniqueKeyMap  = make(map[string][]string)
@@ -38,7 +38,7 @@ func ParseContent(content []byte, database string) ([]*Table, error) {
 		for _, column := range columns {
 			if column.Constraint != nil {
 				if column.Constraint.Primary {
-					primaryColumnSet.AddStr(column.Name)
+					primaryColumnSet.Add(column.Name)
 				}
 
 				if column.Constraint.Unique {
@@ -60,7 +60,7 @@ func ParseContent(content []byte, database string) ([]*Table, error) {
 
 			if len(e.ColumnPrimaryKey) == 1 {
 				primaryColumn = e.ColumnPrimaryKey[0]
-				primaryColumnSet.AddStr(e.ColumnPrimaryKey[0])
+				primaryColumnSet.Add(e.ColumnPrimaryKey[0])
 			}
 
 			if len(e.ColumnUniqueKey) > 0 {

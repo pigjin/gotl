@@ -16,7 +16,9 @@
     try {
       return JSON.parse(String(source));
     } catch (_) {
-      throw new Error("当前结果不是有效的 JSON");
+      const error = new Error("invalid JSON");
+      error.code = "INVALID_JSON";
+      throw error;
     }
   }
 

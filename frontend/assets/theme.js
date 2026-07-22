@@ -15,6 +15,7 @@
   "use strict";
 
   const storageKey = "gotl-theme";
+  const preferences = ["system", "light", "dark"];
   const colors = {
     light: "#f4f7f8",
     dark: "#0b1218"
@@ -24,24 +25,30 @@
     return value === "light" || value === "dark";
   }
 
-  function createThemeController() {
-    let selectedTheme = null;
-    let systemPreference = null;
+  function isPreference(value) {
+    return preferences.includes(value);
+  }
 
-    function readStoredTheme(scope) {
+  function createThemeController() {
+    let selectedPreference = "system";
+    let systemPreference = null;
+    let systemListenerBound = false;
+    const listeners = new Set();
+
+    function readStoredPreference(scope) {
       try {
         const value = scope.localStorage.getItem(storageKey);
-        return isTheme(value) ? value : null;
+        return isPreference(value) ? value : "system";
       } catch (_) {
-        return null;
+        return "system";
       }
     }
 
-    function storeTheme(scope, theme) {
+    function storePreference(scope, preference) {
       try {
-        scope.localStorage.setItem(storageKey, theme);
+        scope.localStorage.setItem(storageKey, preference);
       } catch (_) {
-        // The theme still works for this page when storage is unavailable.
+        // The selected theme still applies to this page when storage is unavailable.
       }
     }
 
@@ -52,78 +59,91 @@
       return systemPreference && systemPreference.matches ? "dark" : "light";
     }
 
+    function resolveTheme(scope, preference) {
+      return isTheme(preference) ? preference : preferredTheme(scope);
+    }
+
     function currentTheme(scope) {
       const value = scope.document.documentElement.getAttribute("data-theme");
-      return isTheme(value) ? value : preferredTheme(scope);
+      return isTheme(value) ? value : resolveTheme(scope, selectedPreference);
     }
 
-    function updateToggle(scope, theme) {
-      const button = scope.document.getElementById("theme-toggle");
-      const label = scope.document.getElementById("theme-toggle-label");
-      if (!button) return;
-
-      const nextLabel = theme === "dark" ? "浅色" : "深色";
-      button.setAttribute("aria-pressed", String(theme === "dark"));
-      button.setAttribute("aria-label", `切换为${nextLabel}模式`);
-      button.setAttribute("title", `切换为${nextLabel}模式`);
-      if (label) label.textContent = theme === "dark" ? "深色" : "浅色";
+    function notify(scope) {
+      const state = {
+        preference: selectedPreference,
+        theme: currentTheme(scope)
+      };
+      listeners.forEach(function (listener) {
+        listener(state);
+      });
     }
 
-    function applyTheme(scope, theme) {
-      const resolvedTheme = isTheme(theme) ? theme : preferredTheme(scope);
+    function applyPreference(scope, preference, shouldNotify) {
+      const resolvedTheme = resolveTheme(scope, preference);
       const root = scope.document.documentElement;
       const themeColor = scope.document.querySelector('meta[name="theme-color"]');
 
       root.setAttribute("data-theme", resolvedTheme);
+      root.setAttribute("data-theme-preference", preference);
       root.style.colorScheme = resolvedTheme;
       if (themeColor) themeColor.setAttribute("content", colors[resolvedTheme]);
-      updateToggle(scope, resolvedTheme);
+      if (shouldNotify) notify(scope);
       return resolvedTheme;
     }
 
-    function initialize(scope) {
-      selectedTheme = readStoredTheme(scope);
-      const initialTheme = applyTheme(scope, selectedTheme || preferredTheme(scope));
+    function bindSystemListener(scope) {
+      preferredTheme(scope);
+      if (!systemPreference || systemListenerBound) return;
 
-      if (systemPreference) {
-        const followSystem = function (event) {
-          if (!selectedTheme) applyTheme(scope, event.matches ? "dark" : "light");
-        };
-        if (typeof systemPreference.addEventListener === "function") {
-          systemPreference.addEventListener("change", followSystem);
-        } else if (typeof systemPreference.addListener === "function") {
-          systemPreference.addListener(followSystem);
-        }
+      const followSystem = function () {
+        if (selectedPreference === "system") applyPreference(scope, "system", true);
+      };
+      if (typeof systemPreference.addEventListener === "function") {
+        systemPreference.addEventListener("change", followSystem);
+      } else if (typeof systemPreference.addListener === "function") {
+        systemPreference.addListener(followSystem);
       }
-
-      return initialTheme;
+      systemListenerBound = true;
     }
 
-    function bindToggle(scope) {
-      const button = scope.document.getElementById("theme-toggle");
-      if (!button || button.getAttribute("data-theme-bound") === "true") return;
+    function initialize(scope) {
+      selectedPreference = readStoredPreference(scope);
+      bindSystemListener(scope);
+      return applyPreference(scope, selectedPreference, false);
+    }
 
-      button.setAttribute("data-theme-bound", "true");
-      updateToggle(scope, currentTheme(scope));
-      button.addEventListener("click", function () {
-        const nextTheme = currentTheme(scope) === "dark" ? "light" : "dark";
-        selectedTheme = nextTheme;
-        storeTheme(scope, nextTheme);
-        applyTheme(scope, nextTheme);
-      });
+    function setPreference(scope, preference) {
+      selectedPreference = isPreference(preference) ? preference : "system";
+      bindSystemListener(scope);
+      storePreference(scope, selectedPreference);
+      return applyPreference(scope, selectedPreference, true);
+    }
+
+    function subscribe(listener) {
+      listeners.add(listener);
+      return function () {
+        listeners.delete(listener);
+      };
     }
 
     return {
-      applyTheme: applyTheme,
-      bindToggle: bindToggle,
+      applyPreference: function (scope, preference) {
+        selectedPreference = isPreference(preference) ? preference : "system";
+        return applyPreference(scope, selectedPreference, true);
+      },
       currentTheme: currentTheme,
-      initialize: initialize
+      initialize: initialize,
+      preference: function () { return selectedPreference; },
+      setPreference: setPreference,
+      subscribe: subscribe
     };
   }
 
   return {
     createThemeController: createThemeController,
+    isPreference: isPreference,
     isTheme: isTheme,
+    preferences: preferences,
     storageKey: storageKey
   };
 });

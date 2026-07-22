@@ -10,6 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon-180.png">
   <script src="/assets/theme.js"></script>
+  <script src="/assets/i18n.js"></script>
   <link rel="stylesheet" href="/assets/styles.css">
   <script src="/assets/vendor/json-to-go.js" defer></script>
   <script src="/assets/syntax-highlight.js" defer></script>
@@ -17,10 +18,10 @@
   <script src="/assets/app.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <a id="skip-link" class="skip-link" href="#main-content">跳到主要内容</a>
   <header class="site-header">
     <div class="header-inner">
-      <a class="brand" href="/" aria-label="返回 GOTL 首页">
+      <a id="brand-link" class="brand" href="/" aria-label="返回 GOTL 首页">
         <img class="brand-mark" src="/assets/gotl-icon-128.png" width="38" height="38" alt="">
         <span class="brand-copy">
           <strong>GOTL</strong>
@@ -28,24 +29,60 @@
         </span>
       </a>
       <div class="header-actions">
-        <div class="header-meta" aria-label="站点状态">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span>本地运行</span>
-          <span class="header-divider" aria-hidden="true"></span>
-          <span>8 个工具</span>
+        <span id="header-tool-count" class="header-tool-count">8 个工具</span>
+        <a id="header-github-link" class="header-action-link" href="https://github.com/pigjin/gotl" target="_blank" rel="noopener noreferrer" aria-label="在 GitHub 查看 pigjin/gotl 项目">
+          <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="currentColor">
+            <path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.87c-2.78.61-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.58 9.58 0 0 1 12 6.82c.85 0 1.71.11 2.51.34 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"></path>
+          </svg>
+          <span class="header-action-label">GitHub</span>
+        </a>
+        <div id="settings-control" class="settings-control">
+          <button id="settings-toggle" class="settings-toggle" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings-menu">
+            <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6"></path>
+            </svg>
+            <span id="settings-toggle-label" class="header-action-label">设置</span>
+          </button>
+          <div id="settings-menu" class="settings-menu" role="dialog" aria-modal="false" aria-labelledby="settings-title" hidden>
+            <div class="settings-menu-header">
+              <strong id="settings-title">外观与语言</strong>
+            </div>
+            <fieldset class="settings-group">
+              <legend id="language-legend">语言</legend>
+              <div class="settings-options">
+                <label class="settings-option">
+                  <input type="radio" name="language-preference" value="system">
+                  <span id="language-system-label">跟随浏览器</span>
+                </label>
+                <label class="settings-option">
+                  <input type="radio" name="language-preference" value="zh-CN">
+                  <span id="language-zh-label">简体中文</span>
+                </label>
+                <label class="settings-option">
+                  <input type="radio" name="language-preference" value="en">
+                  <span id="language-en-label">English</span>
+                </label>
+              </div>
+            </fieldset>
+            <fieldset class="settings-group">
+              <legend id="theme-legend">主题</legend>
+              <div class="settings-options">
+                <label class="settings-option">
+                  <input type="radio" name="theme-preference" value="system">
+                  <span id="theme-system-label">跟随系统</span>
+                </label>
+                <label class="settings-option">
+                  <input type="radio" name="theme-preference" value="light">
+                  <span id="theme-light-label">浅色</span>
+                </label>
+                <label class="settings-option">
+                  <input type="radio" name="theme-preference" value="dark">
+                  <span id="theme-dark-label">深色</span>
+                </label>
+              </div>
+            </fieldset>
+          </div>
         </div>
-        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切换为深色模式" aria-pressed="false">
-          <span class="theme-toggle-icons" aria-hidden="true">
-            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-              <circle cx="12" cy="12" r="3.5"></circle>
-              <path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"></path>
-            </svg>
-            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20.2 15.2A8.5 8.5 0 0 1 8.8 3.8a8.5 8.5 0 1 0 11.4 11.4Z"></path>
-            </svg>
-          </span>
-          <span id="theme-toggle-label" class="theme-toggle-label">浅色</span>
-        </button>
       </div>
     </div>
   </header>
@@ -54,7 +91,7 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
   <noscript>
-    <div class="noscript">GOTL 需要启用 JavaScript 才能使用转换工具。</div>
+    <div class="noscript">GOTL 需要启用 JavaScript 才能使用转换工具。JavaScript is required to use GOTL.</div>
   </noscript>
 </body>
 </html>

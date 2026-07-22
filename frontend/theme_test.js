@@ -8,19 +8,11 @@ function createElement() {
   const attributes = new Map();
   return {
     style: {},
-    textContent: "",
-    listener: null,
     getAttribute(name) {
       return attributes.has(name) ? attributes.get(name) : null;
     },
     setAttribute(name, value) {
       attributes.set(name, String(value));
-    },
-    addEventListener(name, listener) {
-      if (name === "click") this.listener = listener;
-    },
-    click() {
-      if (this.listener) this.listener();
     }
   };
 }
@@ -28,33 +20,30 @@ function createElement() {
 function createScope(options = {}) {
   const root = createElement();
   const meta = createElement();
-  const button = createElement();
-  const label = createElement();
   const stored = new Map();
   const media = {
     matches: Boolean(options.prefersDark),
     listener: null,
     addEventListener(name, listener) {
       if (name === "change") this.listener = listener;
+    },
+    dispatch(matches) {
+      this.matches = matches;
+      if (this.listener) this.listener({ matches });
     }
   };
-  if (options.storedTheme) stored.set(themeModule.storageKey, options.storedTheme);
+  if (typeof options.storedPreference !== "undefined") {
+    stored.set(themeModule.storageKey, options.storedPreference);
+  }
 
   return {
     root,
     meta,
-    button,
-    label,
     media,
     stored,
     scope: {
       document: {
         documentElement: root,
-        getElementById(id) {
-          if (id === "theme-toggle") return button;
-          if (id === "theme-toggle-label") return label;
-          return null;
-        },
         querySelector(selector) {
           return selector === 'meta[name="theme-color"]' ? meta : null;
         }
@@ -74,56 +63,67 @@ function createScope(options = {}) {
   };
 }
 
-test("uses the system preference when no theme was selected", function () {
+test("defaults to the system preference", function () {
   const fixture = createScope({ prefersDark: true });
   const controller = themeModule.createThemeController();
 
   assert.equal(controller.initialize(fixture.scope), "dark");
+  assert.equal(controller.preference(), "system");
   assert.equal(fixture.root.getAttribute("data-theme"), "dark");
+  assert.equal(fixture.root.getAttribute("data-theme-preference"), "system");
   assert.equal(fixture.meta.getAttribute("content"), "#0b1218");
 });
 
-test("restores a stored preference over the system preference", function () {
-  const fixture = createScope({ prefersDark: true, storedTheme: "light" });
+test("restores legacy light and dark preferences", function () {
+  const fixture = createScope({ prefersDark: true, storedPreference: "light" });
   const controller = themeModule.createThemeController();
 
   assert.equal(controller.initialize(fixture.scope), "light");
+  assert.equal(controller.preference(), "light");
   assert.equal(fixture.root.style.colorScheme, "light");
 });
 
-test("toggles and stores the selected theme", function () {
+test("stores direct light and dark selections", function () {
   const fixture = createScope();
   const controller = themeModule.createThemeController();
 
   controller.initialize(fixture.scope);
-  controller.bindToggle(fixture.scope);
-  fixture.button.click();
-
-  assert.equal(fixture.root.getAttribute("data-theme"), "dark");
+  assert.equal(controller.setPreference(fixture.scope, "dark"), "dark");
   assert.equal(fixture.stored.get(themeModule.storageKey), "dark");
-  assert.equal(fixture.button.getAttribute("aria-pressed"), "true");
-  assert.equal(fixture.button.getAttribute("aria-label"), "切换为浅色模式");
-  assert.equal(fixture.label.textContent, "深色");
+  assert.equal(controller.preference(), "dark");
+  assert.equal(fixture.meta.getAttribute("content"), "#0b1218");
 });
 
-test("continues following system changes until the user makes a selection", function () {
+test("manual themes ignore later system changes", function () {
   const fixture = createScope();
   const controller = themeModule.createThemeController();
 
   controller.initialize(fixture.scope);
-  fixture.media.listener({ matches: true });
+  controller.setPreference(fixture.scope, "dark");
+  fixture.media.dispatch(false);
 
-  assert.equal(fixture.root.getAttribute("data-theme"), "dark");
+  assert.equal(controller.currentTheme(fixture.scope), "dark");
 });
 
-test("stops following system changes after a manual selection", function () {
-  const fixture = createScope();
+test("switching back to system resumes live system changes", function () {
+  const fixture = createScope({ prefersDark: true });
   const controller = themeModule.createThemeController();
 
   controller.initialize(fixture.scope);
-  controller.bindToggle(fixture.scope);
-  fixture.button.click();
-  fixture.media.listener({ matches: false });
+  controller.setPreference(fixture.scope, "light");
+  controller.setPreference(fixture.scope, "system");
+  fixture.media.dispatch(false);
 
-  assert.equal(fixture.root.getAttribute("data-theme"), "dark");
+  assert.equal(fixture.stored.get(themeModule.storageKey), "system");
+  assert.equal(controller.preference(), "system");
+  assert.equal(controller.currentTheme(fixture.scope), "light");
+  assert.equal(fixture.root.getAttribute("data-theme"), "light");
+});
+
+test("invalid stored preferences fall back to system", function () {
+  const fixture = createScope({ prefersDark: true, storedPreference: "sepia" });
+  const controller = themeModule.createThemeController();
+
+  assert.equal(controller.initialize(fixture.scope), "dark");
+  assert.equal(controller.preference(), "system");
 });

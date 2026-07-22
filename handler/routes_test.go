@@ -47,6 +47,21 @@ func TestFrontendRoutes(t *testing.T) {
 	}
 }
 
+func TestFrontendShellLinksAndRunStatus(t *testing.T) {
+	r := newTestRouter()
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	r.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	body := w.Body.String()
+	assert.Contains(t, body, `href="https://github.com/pigjin/gotl"`)
+	assert.Contains(t, body, `target="_blank"`)
+	assert.Contains(t, body, `rel="noopener noreferrer"`)
+	assert.NotContains(t, body, "本地运行")
+	assert.NotContains(t, body, "localhost:8080")
+}
+
 func TestFrontendAssets(t *testing.T) {
 	r := newTestRouter()
 	tests := []struct {
@@ -55,6 +70,8 @@ func TestFrontendAssets(t *testing.T) {
 	}{
 		{path: "/assets/styles.css", contains: ":root"},
 		{path: "/assets/app.js", contains: "const tools"},
+		{path: "/assets/i18n.js", contains: "createLanguageController"},
+		{path: "/assets/theme.js", contains: "createThemeController"},
 		{path: "/assets/json-format.js", contains: "GOTLJSON"},
 		{path: "/assets/vendor/json-to-go.js", contains: "function jsonToGo"},
 	}

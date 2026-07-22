@@ -40,7 +40,12 @@ test("compact and format are idempotent", function () {
 });
 
 test("rejects invalid JSON", function () {
-  assert.throws(function () {
-    jsonFormat.compact('{"broken":}');
-  }, /不是有效的 JSON/);
+  assert.throws(
+    function () {
+      jsonFormat.compact('{"broken":}');
+    },
+    function (error) {
+      return error && error.code === "INVALID_JSON";
+    }
+  );
 });
